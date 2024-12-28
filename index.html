@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supply Chain DApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/truffle-contract@4.0.31/dist/truffle-contract.min.js"></script>
+    <script src="js/app.js" defer></script> <!-- Load JS after HTML with defer -->
+    <style>
+        body, h1, h2, h3, p, input, button, select {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #007BFF;
+        }
+
+        main {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Tab styles */
+        .tabs {
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background-color: #e7e7e7;
+            border-radius: 5px 5px 0 0;
+            border: 1px solid #ccc;
+            margin-right: 5px;
+        }
+
+        .tab:last-child {
+            margin-right: 0;
+        }
+
+        .tab.active {
+            background-color: #007BFF;
+            color: white;
+        }
+
+        .tab-content {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+            display: none; /* Hide all tab contents initially */
+        }
+
+        .tab-content.active {
+            display: block; /* Show the active tab content */
+        }
+
+        h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            main {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Supply Chain Blockchain</h1>
+        <div id="accountInfo" style="font-size: 1em; color: #007BFF;"></div> <!-- Display account info -->
+        <div id="networkInfo" style="font-size: 1em; color: #007BFF;"></div> <!-- Display network info -->
+    </header>
+
+    <main>
+        <div id="loading">Loading...</div> <!-- Loading indicator -->
+
+        <div class="tabs">
+            <div class="tab active" id="createProductTab">Create Product</div>
+            <div class="tab" id="updateProductTab">Update Product State</div>
+            <div class="tab" id="transferOwnershipTab">Transfer Ownership</div> <!-- New Tab for Ownership Transfer -->
+            <div class="tab" id="fetchProductsTab">Products List</div>
+        </div>
+
+        <div id="createProductContent" class="tab-content active">
+            <form id="createProductForm" onsubmit="return false;">
+                <label for="productName">Product Name:</label>
+                <input type="text" id="productName" placeholder="Enter Product Name" required aria-label="Product Name">
+                <button type="submit" id="createProductBtn">Create Product</button>
+            </form>
+            <div id="errorMessage" style="color: red; display: none;"></div>
+        </div>
+
+        <div id="updateProductContent" class="tab-content">
+            <form id="updateProductStateForm" onsubmit="return false;">
+                <label for="productId">Product ID:</label>
+                <input type="number" id="productId" placeholder="Enter Product ID" required aria-label="Product ID">
+                <label for="productState">Select Product State:</label>
+                <select id="productState" aria-label="Product State">
+                    <option value="0">Created</option>
+                    <option value="1">In Transit</option>
+                    <option value="2">Delivered</option>
+                </select>
+                <button type="submit" id="updateProductBtn">Update State</button>
+            </form>
+        </div>
+
+        <div id="transferOwnershipContent" class="tab-content">
+            <form id="transferOwnershipForm" onsubmit="return false;">
+                <label for="transferProductId">Product ID:</label>
+                <input type="number" id="transferProductId" placeholder="Enter Product ID" required aria-label="Product ID">
+                <label for="newOwnerAddress">New Owner Address:</label>
+                <input type="text" id="newOwnerAddress" placeholder="Enter New Owner Address" required aria-label="New Owner Address">
+                <button type="submit" id="transferOwnershipBtn">Transfer Ownership</button>
+            </form>
+        </div>
+
+        <div id="fetchProductsContent" class="tab-content">
+            <button type="button" id="fetchProductsBtn">Fetch Products</button>
+            <div id="productList"></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Supply Chain DApp. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Tab functionality
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active')); // Remove active class from all tabs
+                tabContents.forEach(content => content.classList.remove('active')); // Hide all contents
+
+                tab.classList.add('active'); // Set current tab as active
+                document.getElementById(tab.id.replace('Tab', 'Content')).classList.add('active'); // Show current tab content
+            });
+        });
+    </script>
+</body>
+</html>
